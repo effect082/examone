@@ -31,19 +31,17 @@ function generateQuiz(type) {
     if (type === 'subject') {
         const sub = UIElem.subjectSelect.value;
         if (!sub) return showToast('과목을 선택해주세요.');
-        pool = oxData.filter(q => q.category === sub);
+        // Filter by subject and ensure question exists
+        pool = oxData.filter(q => q.subject === sub && q.question && q.question.trim() !== "");
     } else if (type === 'random') {
-        pool = [...oxData];
+        pool = oxData.filter(q => q.question && q.question.trim() !== "");
     }
     
-    // Filter out dummy empty entries
-    pool = pool.filter(q => q.question && q.question.trim() !== "");
-    
-    // Select 20 random OX questions
+    // Select up to 20 random OX questions
     currentQuiz = shuffleArray(pool).slice(0, 20);
     
     if (currentQuiz.length === 0) {
-        showToast('문제를 생성할 수 없습니다.');
+        showToast('해당 조건의 문제를 찾을 수 없습니다.');
         return;
     }
 
@@ -71,16 +69,23 @@ function renderCurrentQuestion() {
     const q = currentQuiz[currentQuestionIndex];
     
     let html = `
-        <div style="font-size: 0.8rem; color: var(--primary-light); font-weight: 600; margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
-            <span>[${q.category || 'OX 퀴즈'}]</span>
-            <span>${currentQuestionIndex + 1} / ${currentQuiz.length}</span>
+        <div class="ox-card">
+            <span class="category-badge">${q.subject || '공통'}</span>
+            <div class="progress-info">QUESTION ${currentQuestionIndex + 1} / ${currentQuiz.length}</div>
+            
+            <div class="ox-question-text">
+                ${q.question}
+            </div>
+
+            <div class="ox-btn-group">
+                <button class="ox-big-btn btn-o" onclick="selectAnswer('O')">O</button>
+                <button class="ox-big-btn btn-x" onclick="selectAnswer('X')">X</button>
+            </div>
+
+            <div id="feedback-area" class="ox-feedback hidden">
+                <!-- Feedback text and explanation will appear here -->
+            </div>
         </div>
-        <h4 class="text-primary mt-3" style="font-size: 1.2rem; line-height: 1.6; min-height: 80px;">${q.question}</h4>
-        <div class="ox-btn-group mt-4 mb-2">
-            <button class="ox-btn" id="btn-O" onclick="selectAnswer('O')">O</button>
-            <button class="ox-btn" id="btn-X" onclick="selectAnswer('X')">X</button>
-        </div>
-        <div id="feedback-area" class="feedback hidden mt-4 p-3" style="border-radius: 8px;"></div>
     `;
     
     UIElem.qContainer.innerHTML = html;
@@ -97,50 +102,52 @@ window.selectAnswer = function selectAnswer(ans) {
     const feedback = document.getElementById('feedback-area');
     feedback.classList.remove('hidden');
     
-    // Disable buttons
-    document.getElementById('btn-O').style.pointerEvents = 'none';
-    document.getElementById('btn-X').style.pointerEvents = 'none';
+    // Visual feedback for buttons
+    const btns = document.querySelectorAll('.ox-big-btn');
+    btns.forEach(btn => btn.style.opacity = '0.3');
     
+    const correctBtnClass = correctAns === 'O' ? '.btn-o' : '.btn-x';
+    const selectedBtnClass = ans === 'O' ? '.btn-o' : '.btn-x';
+    
+    const correctBtn = document.querySelector(correctBtnClass);
+    const selectedBtn = document.querySelector(selectedBtnClass);
+    
+    if (correctBtn) {
+        correctBtn.style.opacity = '1';
+        correctBtn.style.transform = 'scale(1.1)';
+        correctBtn.style.boxShadow = '0 0 20px var(--success-color)';
+    }
+
     if (ans === correctAns) {
         correctCount++;
-        feedback.style.backgroundColor = 'var(--bg-gradient-1)';
-        feedback.style.color = 'var(--primary-dark)';
-        feedback.innerHTML = `<strong><i class="fas fa-check-circle" style="color: var(--success)"></i> 정답입니다!</strong>`;
-        
-        document.getElementById(`btn-${correctAns}`).style.backgroundColor = 'var(--bg-gradient-1)';
-        document.getElementById(`btn-${correctAns}`).style.color = 'var(--primary-dark)';
-        document.getElementById(`btn-${correctAns}`).style.borderColor = 'var(--primary-dark)';
-        
+        feedback.className = 'ox-feedback feedback-correct';
+        feedback.innerHTML = `
+            <div style="font-size: 1.2rem; font-weight: 800;">
+                <i class="fas fa-check-circle"></i> 정답입니다!
+            </div>
+        `;
         document.getElementById('add-note-btn').classList.add('hidden');
     } else {
-        feedback.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-        feedback.style.color = 'var(--danger)';
-        feedback.innerHTML = `<strong><i class="fas fa-times-circle"></i> 오답입니다. (정답: ${correctAns})</strong>`;
-        
-        const correctBtn = document.getElementById(`btn-${correctAns}`);
-        if(correctBtn) {
-            correctBtn.style.backgroundColor = 'var(--bg-gradient-1)';
-            correctBtn.style.color = 'var(--primary-dark)';
-            correctBtn.style.borderColor = 'var(--primary-dark)';
+        if (selectedBtn) {
+            selectedBtn.style.opacity = '1';
+            selectedBtn.style.transform = 'scale(0.9)';
         }
-        
-        const wrongBtn = document.getElementById(`btn-${ans}`);
-        if(wrongBtn) {
-            wrongBtn.style.backgroundColor = 'var(--danger)';
-            wrongBtn.style.color = '#fff';
-            wrongBtn.style.borderColor = 'var(--danger)';
-        }
-        
+        feedback.className = 'ox-feedback feedback-incorrect';
+        feedback.innerHTML = `
+            <div style="font-size: 1.2rem; font-weight: 800;">
+                <i class="fas fa-times-circle"></i> 오답입니다. (정답: ${correctAns})
+            </div>
+        `;
         document.getElementById('add-note-btn').classList.remove('hidden');
     }
     
     if (q.explanation) {
-        feedback.innerHTML += `<div class="mt-2 text-sm" style="color: var(--text-dark);"><i class="fas fa-info-circle"></i> ${q.explanation}</div>`;
+        feedback.innerHTML += `<div class="explanation-text">${q.explanation}</div>`;
     }
     
     const nextBtn = document.getElementById('next-q-btn');
     if (currentQuestionIndex === currentQuiz.length - 1) {
-        nextBtn.innerHTML = '결과 보기 <i class="fas fa-chart-bar"></i>';
+        nextBtn.innerHTML = '결과 확인하기 <i class="fas fa-chart-line"></i>';
     } else {
         nextBtn.innerHTML = '다음 문제 <i class="fas fa-arrow-right"></i>';
     }
