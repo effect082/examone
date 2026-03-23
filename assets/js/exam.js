@@ -148,31 +148,44 @@ function submitExam() {
         const labels = document.querySelectorAll(`#q-card-${idx} .q-opt-label`);
         labels.forEach(l => l.style.pointerEvents = 'none'); // disable clicks
         
-        if (userAns === correctAns) {
+        if (!isNaN(correctAns) && userAns === correctAns) {
             correctCount++;
-            feedback.style.backgroundColor = 'var(--bg-gradient-1)';
+            feedback.style.backgroundColor = 'rgba(34, 197, 94, 0.1)';
             feedback.style.color = 'var(--primary-dark)';
             feedback.innerHTML = `<i class="fas fa-check-circle" style="color: var(--success)"></i> 정답입니다!`;
         } else {
             feedback.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
             feedback.style.color = 'var(--danger)';
-            feedback.innerHTML = `<i class="fas fa-times-circle"></i> 오답입니다. (정답: ${correctAns}번)`;
             
-            if (q.explanation) {
-                feedback.innerHTML += `<div class="mt-2 text-sm" style="color: var(--text-secondary);"><i class="fas fa-info-circle"></i> ${q.explanation}</div>`;
+            if (isNaN(correctAns)) {
+                feedback.innerHTML = `<i class="fas fa-exclamation-triangle"></i> 오답입니다. (정답 정보가 아직 데이터에 없습니다.)`;
+            } else {
+                feedback.innerHTML = `<i class="fas fa-times-circle"></i> 오답입니다. (정답: ${correctAns}번)`;
             }
             
-            // Mark correct answer visually
-            const correctLabel = document.getElementById(`label-${idx}-${correctAns}`);
-            if(correctLabel) correctLabel.style.backgroundColor = 'var(--bg-gradient-1)';
+            if (q.explanation) {
+                feedback.innerHTML += `<div class="mt-2 text-sm pt-2" style="color: var(--text-secondary); border-top: 1px dashed rgba(0,0,0,0.1);"><i class="fas fa-info-circle"></i> <strong>해설:</strong> ${q.explanation}</div>`;
+            }
+            
+            // Mark correct answer visually if it exists
+            if (!isNaN(correctAns)) {
+                const correctLabel = document.getElementById(`label-${idx}-${correctAns}`);
+                if(correctLabel) {
+                    correctLabel.style.backgroundColor = 'rgba(34, 197, 94, 0.1)';
+                    correctLabel.style.border = '1px solid var(--success)';
+                }
+            }
             
             // Mark wrong answer
             if (userAns) {
                 const wrongLabel = document.getElementById(`label-${idx}-${userAns}`);
-                if(wrongLabel) wrongLabel.style.border = '1px solid var(--danger)';
+                if(wrongLabel) {
+                    wrongLabel.style.border = '1px solid var(--danger)';
+                    wrongLabel.style.backgroundColor = 'rgba(239, 68, 68, 0.05)';
+                }
             }
 
-            // Save to notebook
+            // Save to notebook if incorrect
             DB.saveIncorrect('exam', q);
         }
     });
