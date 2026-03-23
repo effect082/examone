@@ -18,20 +18,8 @@ async function loadData() {
         const res = await fetch('data/exam_data.json');
         examData = await res.json();
         
-        // Populate subject dropdown (extract unique subjects)
-        const subjects = new Set();
-        examData.forEach(sec => {
-            if (sec.section_subject) subjects.add(sec.section_subject);
-            sec.subjects.forEach(s => subjects.add(s));
-        });
-        
-        subjects.forEach(sub => {
-            if(!sub) return;
-            const opt = document.createElement('option');
-            opt.value = sub;
-            opt.textContent = sub;
-            UIElem.subjectSelect.appendChild(opt);
-        });
+        // We no longer dynamically populate the dropdown from json. 
+        // We use the static <optgroup> in exam.html to ensure the 8 subjects are always present.
 
     } catch (e) {
         console.error('Failed to load exam data', e);
@@ -44,9 +32,27 @@ function generateExam(type) {
     let pool = [];
     if (type === 'subject') {
         const sub = UIElem.subjectSelect.value;
+        if (!sub) return showToast('과목을 선택해주세요.');
+
         examData.forEach(sec => {
-            if (sec.section_subject === sub || sec.subjects.includes(sub)) {
-                pool = pool.concat(sec.questions);
+            // Find if the selected subject is in this section's subjects array
+            const subIndex = sec.subjects.indexOf(sub);
+            if (subIndex > -1) {
+                // The actual exam divides questions by 25 per subject exactly.
+                const startIndex = subIndex * 25;
+                const endIndex = startIndex + 25;
+                const subjectQuestions = sec.questions.slice(startIndex, endIndex);
+
+                // Add the specific subject as a property to each question for later saving
+                const taggedQuestions = subjectQuestions.map(q => ({
+                    ...q,
+                    subject: sub
+                }));
+
+                pool = pool.concat(taggedQuestions);
+            } else if (sec.section_subject === sub) {
+               // Fallback if user somehow selects a whole section (though our new UI won't allow it, good for safety)
+               pool = pool.concat(sec.questions);
             }
         });
         

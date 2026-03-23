@@ -73,9 +73,23 @@
                 <div class="glass-card" style="text-align: center;">
                     <h3><i class="fas fa-book-open"></i> 과목별 연습 (20문항)</h3>
                     <p class="mb-4">취약한 과목의 주요 핵심 지문을 OX 퀴즈로 연습합니다.</p>
-                    <select id="subject-select" class="form-control mb-4">
-                        <option value="">-- 과목을 선택하세요 --</option>
-                    </select>
+                        <select id="subject-select" class="form-control mb-4">
+                            <option value="">-- 과목을 선택하세요 --</option>
+                            <optgroup label="1교시: 사회복지기초">
+                                <option value="인간행동과 사회환경">인간행동과 사회환경</option>
+                                <option value="사회복지조사론">사회복지조사론</option>
+                            </optgroup>
+                            <optgroup label="2교시: 사회복지실천">
+                                <option value="사회복지실천론">사회복지실천론</option>
+                                <option value="사회복지실천기술론">사회복지실천기술론</option>
+                                <option value="지역사회복지론">지역사회복지론</option>
+                            </optgroup>
+                            <optgroup label="3교시: 사회복지정책과 제도">
+                                <option value="사회복지정책론">사회복지정책론</option>
+                                <option value="사회복지행정론">사회복지행정론</option>
+                                <option value="사회복지법제론">사회복지법제론</option>
+                            </optgroup>
+                        </select>
                     <button class="btn btn-primary" onclick="generateQuiz('subject')">시작하기</button>
                 </div>
                 

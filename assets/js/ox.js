@@ -19,17 +19,8 @@ async function loadData() {
         oxData = await res.json();
         
         // Populate subject dropdown (extract unique subjects)
-        const categories = new Set();
-        oxData.forEach(q => {
-            if (q.category) categories.add(q.category);
-        });
-        
-        categories.forEach(cat => {
-            const opt = document.createElement('option');
-            opt.value = cat;
-            opt.textContent = cat;
-            UIElem.subjectSelect.appendChild(opt);
-        });
+        // We no longer dynamically populate the dropdown from json. 
+        // We use the static <optgroup> in ox.html to ensure the 8 subjects are always present.
 
     } catch (e) {
         console.error('Failed to load OX data', e);

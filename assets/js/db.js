@@ -132,7 +132,7 @@ const DB = {
                         userId: this.user.userId,
                         questionId: newItem.id,
                         questionText: (questionData.question || '').substring(0, 50),
-                        subject: type === 'ox' ? 'OX Quiz' : 'Exam',
+                        subject: questionData.subject || questionData.category || (type === 'ox' ? 'OX Quiz' : 'Exam'),
                         memo: JSON.stringify(newItem) // store full object in memo to sync back easily
                     }),
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }
