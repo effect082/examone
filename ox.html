@@ -15,11 +15,11 @@
     </div>
 
     <div class="app-wrapper">
-        <header class="header" style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+        <header class="header">
             <div class="header-title">
-                 <a href="index.html" style="color: white;"><i class="fas fa-arrow-left"></i> 뒤로가기</a>
+                 <a href="index.html" class="text-primary"><i class="fas fa-arrow-left"></i> 뒤로가기</a>
             </div>
-            <div class="user-info" style="color: white; font-size: 1.2rem;">
+            <div class="user-info" style="color: var(--primary-dark); font-size: 1.2rem;">
                 OX 퀴즈 챌린지
             </div>
         </header>
@@ -28,7 +28,7 @@
         <div id="ox-setup" class="glass-container">
             <div class="text-center mb-4">
                 <h1 style="color: var(--primary-dark); font-size: 2rem;">학습 모드 선택</h1>
-                <p>매일 20문제씩 꾸준히 학습하여 합격에 한 걸음 더 다가가세요.</p>
+                <p>매일 20문제 이상 꾸준히 학습하여 합격에 한 걸음 더 다가가세요.</p>
             </div>
             
             <div class="dashboard-grid">
@@ -59,7 +59,7 @@
                 <div class="glass-card" style="text-align: center; border-radius: 20px;">
                     <div class="dash-icon"><i class="fas fa-random"></i></div>
                     <h3>실전 랜덤 모드</h3>
-                    <p class="mb-4">전체 범위에서 무작위로 20문항을 추출해 실력을 점검합니다.</p>
+                    <p class="mb-4">전체 범위에서 무작위로 20~30문항을 추출해 실력을 점검합니다.</p>
                     <br/>
                     <button class="btn btn-outline btn-block" onclick="generateQuiz('random')">랜덤 퀴즈 시작</button>
                 </div>
@@ -75,7 +75,7 @@
                 
                 <div id="ox-controls" class="hidden mt-4" style="text-align: center; display: flex; flex-direction: column; gap: 1rem; align-items: center;">
                     <button id="next-q-btn" class="btn btn-primary" style="width: 200px; height: 56px; font-size: 1.1rem; border-radius: 28px;" onclick="nextQuestion()">다음 문제 <i class="fas fa-arrow-right"></i></button>
-                    <button id="add-note-btn" class="btn btn-outline" style="border: none; color: white; font-size: 0.9rem;" onclick="addCurrentToNotes()"><i class="fas fa-plus-circle"></i> 이 지문 오답노트에 추가하기</button>
+                    <button id="add-note-btn" class="btn btn-outline" style="border: none; color: var(--primary-color); font-size: 0.9rem;" onclick="addCurrentToNotes()"><i class="fas fa-plus-circle"></i> 이 지문 오답노트에 추가하기</button>
                 </div>
             </div>
         </div>

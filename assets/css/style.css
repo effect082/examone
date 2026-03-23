@@ -1,24 +1,24 @@
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/variable/pretendardvariable.css");
 
 :root {
-    --primary-color: #4f46e5;
-    --primary-light: #6366f1;
-    --primary-dark: #3730a3;
-    --secondary-color: #0ea5e9;
-    --accent-color: #f43f5e; /* Vibrant Pink/Red for X */
-    --success-color: #10b981; /* Vibrant Blue/Green for O */
-    --bg-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
-    --text-primary: #1e293b;
+    --primary-color: #2563eb; /* Professional Blue */
+    --primary-light: #60a5fa;
+    --primary-dark: #1e40af;
+    --secondary-color: #f1f5f9; /* Light Gray/White for backgrounds */
+    --accent-color: #ef4444; /* Clean Red for X */
+    --success-color: #22c55e; /* Clean Green for O */
+    --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); /* Soft Blue-ish White */
+    --text-primary: #0f172a; /* Dark Blue-Black for readability */
     --text-secondary: #475569;
-    --text-light: #f8fafc;
+    --text-light: #ffffff;
     --danger: #ef4444;
     --success: #10b981;
     --warning: #f59e0b;
-    --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.5);
-    --glass-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.15);
-    --border-radius: 24px;
-    --transition-speed: 0.3s;
+    --card-bg: #ffffff;
+    --card-border: #e2e8f0;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --border-radius: 16px;
+    --transition-speed: 0.2s;
 }
 
 * {
@@ -43,32 +43,27 @@ a {
     color: inherit;
 }
 
-/* Glassmorphism Classes */
+/* Clean Card Containers */
 .glass-container {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
     border-radius: var(--border-radius);
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--card-shadow);
     padding: 2rem;
 }
 
 .glass-card {
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
     border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     padding: 1.5rem;
     transition: transform var(--transition-speed), box-shadow var(--transition-speed);
 }
 
 .glass-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-    background: rgba(255, 255, 255, 0.7);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
 }
 
 /* Typography */
@@ -357,16 +352,14 @@ p {
 }
 
 .ox-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
     border-radius: var(--border-radius);
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--card-shadow);
     padding: 3rem 2rem;
     text-align: center;
     position: relative;
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.3s ease;
 }
 
 .category-badge {
@@ -468,7 +461,7 @@ p {
 
 .progress-info {
     font-size: 0.85rem;
-    color: var(--text-light);
+    color: var(--text-secondary);
     margin-top: 1.5rem;
     font-weight: 600;
 }

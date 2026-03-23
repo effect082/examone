@@ -37,8 +37,17 @@ function generateQuiz(type) {
         pool = oxData.filter(q => q.question && q.question.trim() !== "");
     }
     
-    // Select up to 20 random OX questions
-    currentQuiz = shuffleArray(pool).slice(0, 20);
+    // Determine question count based on requirement
+    let count = 20;
+    if (type === 'subject') {
+        count = pool.length; // Use all available (already ensured 20+ per subject)
+    } else if (type === 'random') {
+        // Random between 20 and 30
+        count = Math.floor(Math.random() * 11) + 20;
+    }
+    
+    // Select questions
+    currentQuiz = shuffleArray(pool).slice(0, count);
     
     if (currentQuiz.length === 0) {
         showToast('해당 조건의 문제를 찾을 수 없습니다.');
