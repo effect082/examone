@@ -1,0 +1,199 @@
+let examData = [];
+let currentExam = [];
+let userAnswers = {};
+let isGraded = false;
+
+const UIElem = {
+    setup: document.getElementById('exam-setup'),
+    test: document.getElementById('exam-test'),
+    result: document.getElementById('exam-result'),
+    scoreText: document.getElementById('score-text'),
+    qContainer: document.getElementById('question-container'),
+    subjectSelect: document.getElementById('subject-select')
+};
+
+async function loadData() {
+    showLoader();
+    try {
+        const res = await fetch('data/exam_data.json');
+        examData = await res.json();
+        
+        // Populate subject dropdown (extract unique subjects)
+        const subjects = new Set();
+        examData.forEach(sec => {
+            if (sec.section_subject) subjects.add(sec.section_subject);
+            sec.subjects.forEach(s => subjects.add(s));
+        });
+        
+        subjects.forEach(sub => {
+            if(!sub) return;
+            const opt = document.createElement('option');
+            opt.value = sub;
+            opt.textContent = sub;
+            UIElem.subjectSelect.appendChild(opt);
+        });
+
+    } catch (e) {
+        console.error('Failed to load exam data', e);
+        showToast('데이터를 불러오는데 실패했습니다.');
+    }
+    hideLoader();
+}
+
+function generateExam(type) {
+    let pool = [];
+    if (type === 'subject') {
+        const sub = UIElem.subjectSelect.value;
+        examData.forEach(sec => {
+            if (sec.section_subject === sub || sec.subjects.includes(sub)) {
+                pool = pool.concat(sec.questions);
+            }
+        });
+        
+        if (pool.length < 25) {
+            showToast(`해당 과목 문제가 부족합니다 (${pool.length}개). 모든 문제를 출제합니다.`);
+            currentExam = shuffleArray(pool);
+        } else {
+            currentExam = shuffleArray(pool).slice(0, 25);
+        }
+    } else if (type === 'random80') {
+        examData.forEach(sec => {
+            pool = pool.concat(sec.questions);
+        });
+        currentExam = shuffleArray(pool).slice(0, 80);
+    }
+    
+    if (currentExam.length === 0) {
+        showToast('문제를 생성할 수 없습니다.');
+        return;
+    }
+
+    startTest();
+}
+
+function startTest() {
+    userAnswers = {};
+    isGraded = false;
+    UIElem.setup.classList.add('hidden');
+    UIElem.test.classList.remove('hidden');
+    UIElem.result.classList.add('hidden');
+    
+    renderQuestions();
+    window.scrollTo(0,0);
+}
+
+function renderQuestions() {
+    UIElem.qContainer.innerHTML = '';
+    currentExam.forEach((q, idx) => {
+        const card = document.createElement('div');
+        card.className = 'glass-card mb-4';
+        card.id = `q-card-${idx}`;
+        
+        let html = `
+            <h4 class="text-primary"><span class="qnum">${idx + 1}.</span> ${q.question}</h4>
+            <div class="qopts-container">
+        `;
+        
+        q.options.forEach((opt, optIdx) => {
+            const optNum = optIdx + 1;
+            html += `
+                <label class="q-opt-label" id="label-${idx}-${optNum}">
+                    <input type="radio" name="q-${idx}" value="${optNum}" onchange="selectAnswer(${idx}, ${optNum})">
+                    <span>${opt}</span>
+                </label>
+            `;
+        });
+        
+        html += `</div>
+            <div id="feedback-${idx}" class="feedback hidden mt-4 p-2" style="border-radius: 8px; font-weight: 600;"></div>
+        `;
+        
+        card.innerHTML = html;
+        UIElem.qContainer.appendChild(card);
+    });
+}
+
+function selectAnswer(qIdx, ans) {
+    if (isGraded) return;
+    userAnswers[qIdx] = ans;
+}
+
+function submitExam() {
+    // Check if all answered
+    if (Object.keys(userAnswers).length < currentExam.length) {
+        if (!confirm('풀지 않은 문제가 있습니다. 제출하시겠습니까?')) return;
+    }
+    
+    isGraded = true;
+    let correctCount = 0;
+    
+    currentExam.forEach((q, idx) => {
+        const userAns = userAnswers[idx];
+        const correctAns = parseInt(q.correct_answer);
+        
+        const feedback = document.getElementById(`feedback-${idx}`);
+        feedback.classList.remove('hidden');
+        
+        const labels = document.querySelectorAll(`#q-card-${idx} .q-opt-label`);
+        labels.forEach(l => l.style.pointerEvents = 'none'); // disable clicks
+        
+        if (userAns === correctAns) {
+            correctCount++;
+            feedback.style.backgroundColor = 'var(--bg-gradient-1)';
+            feedback.style.color = 'var(--primary-dark)';
+            feedback.innerHTML = `<i class="fas fa-check-circle" style="color: var(--success)"></i> 정답입니다!`;
+        } else {
+            feedback.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+            feedback.style.color = 'var(--danger)';
+            feedback.innerHTML = `<i class="fas fa-times-circle"></i> 오답입니다. (정답: ${correctAns}번)`;
+            
+            // Mark correct answer visually
+            const correctLabel = document.getElementById(`label-${idx}-${correctAns}`);
+            if(correctLabel) correctLabel.style.backgroundColor = 'var(--bg-gradient-1)';
+            
+            // Mark wrong answer
+            if (userAns) {
+                const wrongLabel = document.getElementById(`label-${idx}-${userAns}`);
+                if(wrongLabel) wrongLabel.style.border = '1px solid var(--danger)';
+            }
+
+            // Save to notebook
+            DB.saveIncorrect('exam', q);
+        }
+    });
+    
+    UIElem.result.classList.remove('hidden');
+    UIElem.scoreText.innerText = `총 ${currentExam.length}문제 중 ${correctCount}문제 정답! (${Math.round((correctCount/currentExam.length)*100)}점)`;
+    window.scrollTo(0, document.body.scrollHeight);
+    
+    // Save Score to Backend
+    const wrongIds = Object.keys(userAnswers).filter(idx => userAnswers[idx] !== parseInt(currentExam[idx].correct_answer));
+    DB.saveScore('exam', UIElem.subjectSelect.value || 'Random', Math.round((correctCount/currentExam.length)*100), currentExam.length, wrongIds);
+    
+    showToast('채점이 완료되었습니다. 오답은 오답노트에 자동 저장됩니다.');
+}
+
+function resetExam() {
+    UIElem.setup.classList.remove('hidden');
+    UIElem.test.classList.add('hidden');
+    UIElem.result.classList.add('hidden');
+    window.scrollTo(0,0);
+}
+
+// Utility
+function shuffleArray(array) {
+    let arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if(!DB.init()) {
+        window.location.href = 'index.html';
+        return;
+    }
+    loadData();
+});

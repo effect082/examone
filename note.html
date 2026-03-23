@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>내 오답노트</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <header class="header">
+            <div class="header-title">
+                 <a href="index.html" style="color: inherit;"><i class="fas fa-arrow-left"></i> 대시보드</a>
+            </div>
+            <div class="user-info">
+                나만의 오답노트
+            </div>
+        </header>
+
+        <div class="glass-container" style="padding: 1.5rem;">
+            
+            <div class="auth-tabs" style="margin-bottom: 2rem;">
+                <div class="auth-tab active" data-target="exam">모의고사 오답</div>
+                <div class="auth-tab" data-target="ox">OX퀴즈 오답</div>
+                <div class="auth-tab" data-target="terms">단어/용어 정리</div>
+            </div>
+
+            <!-- Exam Notes -->
+            <div id="content-exam">
+                <p class="text-secondary mb-4"><i class="fas fa-info-circle"></i> 모의고사에서 틀렸던 문제들을 복습하세요. 정답이 초록색으로 표시됩니다.</p>
+                <div id="exam-list">
+                    <!-- JS rendered -->
+                </div>
+            </div>
+
+            <!-- OX Notes -->
+            <div id="content-ox" class="hidden">
+                <p class="text-secondary mb-4"><i class="fas fa-info-circle"></i> OX 퀴즈에서 틀렸던 지문과 해설입니다.</p>
+                <div id="ox-list">
+                    <!-- JS rendered -->
+                </div>
+            </div>
+
+            <!-- Terms Dictionary -->
+            <div id="content-terms" class="hidden">
+                <p class="text-secondary mb-4"><i class="fas fa-info-circle"></i> 헷갈리는 사회복지 용어나 단어를 직접 등록하고 확인하세요.</p>
+                <div id="term-list">
+                    <!-- JS rendered -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- DB and Note logic -->
+    <script src="assets/js/db.js"></script>
+    <script src="assets/js/note.js"></script>
+</body>
+</html>

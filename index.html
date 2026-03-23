@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>사회복지사 1급 시험 앱</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Loader -->
+    <div id="loader" class="loader-wrapper hidden">
+        <div class="loader"></div>
+        <div style="font-weight: 600; color: var(--primary-dark);">로딩 중...</div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="app-wrapper">
+        
+        <!-- auth section -->
+        <div id="auth-section" class="auth-wrapper hidden">
+            <div class="glass-container auth-card">
+                <div class="auth-logo">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <h2>사회복지사 1급</h2>
+                <p>기출문제 풀이 및 오답노트</p>
+                <div class="auth-tabs">
+                    <div class="auth-tab active" id="tab-login">로그인 / 가입</div>
+                </div>
+                
+                <form id="login-form">
+                    <div class="form-group">
+                        <label class="form-label" for="username">이름</label>
+                        <input type="text" id="username" class="form-control" placeholder="홍길동" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="password">비밀번호</label>
+                        <input type="password" id="password" class="form-control" placeholder="비밀번호 입력" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        시작하기 <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <p class="text-sm mt-4 text-light">처음 오셨다면 이름과 비밀번호를 입력시 자동으로 회원가입이 진행됩니다.</p>
+                </form>
+            </div>
+        </div>
+
+        <!-- dashboard section -->
+        <div id="dashboard-section" class="hidden">
+            <header class="header">
+                <div class="header-title">
+                    <i class="fas fa-graduation-cap"></i> 사회복지사 1급
+                </div>
+                <div class="user-info">
+                    <span id="welcome-text"></span>
+                    <button class="logout-btn" id="logout-btn">로그아웃</button>
+                </div>
+            </header>
+
+            <div class="glass-container">
+                <h3 class="text-center mb-4">환영합니다! 오늘 학습을 시작해볼까요?</h3>
+                
+                <div class="dashboard-grid">
+                    <a href="exam.html" class="glass-card dash-card">
+                        <div class="dash-icon"><i class="fas fa-file-signature"></i></div>
+                        <h3>기출 모의고사</h3>
+                        <p>과목별(25문항) 및 전체(80문항) 실전 풀이</p>
+                    </a>
+                    
+                    <a href="ox.html" class="glass-card dash-card">
+                        <div class="dash-icon"><i class="fas fa-check-circle"></i></div>
+                        <h3>OX 퀴즈</h3>
+                        <p>기출 핵심 지문 O/X 판별 연습 및 오답해설</p>
+                    </a>
+                    
+                    <a href="note.html" class="glass-card dash-card">
+                        <div class="dash-icon"><i class="fas fa-book"></i></div>
+                        <h3>내 오답노트</h3>
+                        <p>틀렸던 문제와 용어를 복습하세요</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="assets/js/db.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const authSec = document.getElementById('auth-section');
+            const dashSec = document.getElementById('dashboard-section');
+            const welcomeText = document.getElementById('welcome-text');
+            const loginForm = document.getElementById('login-form');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            function updateUI() {
+                if (DB.init()) {
+                    authSec.classList.add('hidden');
+                    dashSec.classList.remove('hidden');
+                    welcomeText.innerHTML = `<i class="fas fa-user-circle"></i> ${DB.getUser().name} 님`;
+                } else {
+                    dashSec.classList.add('hidden');
+                    authSec.classList.remove('hidden');
+                }
+            }
+
+            updateUI();
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('username').value.trim();
+                const pass = document.getElementById('password').value.trim();
+                
+                if(!name || !pass) return;
+
+                showLoader();
+                await DB.login(name, pass);
+                hideLoader();
+                
+                updateUI();
+                showToast('로그인 성공!');
+            });
+
+            logoutBtn.addEventListener('click', () => {
+                DB.logout();
+                updateUI();
+            });
+        });
+    </script>
+</body>
+</html>
