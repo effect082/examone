@@ -60,14 +60,19 @@ function generateExam(type) {
             showToast(`해당 과목 문제가 부족합니다 (${pool.length}개). 모든 문제를 출제합니다.`);
             currentExam = shuffleArray(pool);
         } else {
-            currentExam = shuffleArray(pool).slice(0, 25);
+            currentExam = Object.assign([], pool).slice(0, 25);
+            currentExam = shuffleArray(currentExam); // Shuffle after precise slicing
         }
-    } else if (type === 'random80') {
+    } else if (type === 'random') {
+        const count = parseInt(document.getElementById('random-count-select').value) || 80;
         examData.forEach(sec => {
             pool = pool.concat(sec.questions);
         });
-        currentExam = shuffleArray(pool).slice(0, 80);
+        currentExam = shuffleArray(pool).slice(0, count);
     }
+    
+    // Filter out test instruction dummy questions
+    currentExam = currentExam.filter(q => q.question && !q.question.replace(/\s/g, '').includes('답은각문제마다요구하는가장적합하거나가까운답1개만선택하고'));
     
     if (currentExam.length === 0) {
         showToast('문제를 생성할 수 없습니다.');
@@ -152,6 +157,10 @@ function submitExam() {
             feedback.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
             feedback.style.color = 'var(--danger)';
             feedback.innerHTML = `<i class="fas fa-times-circle"></i> 오답입니다. (정답: ${correctAns}번)`;
+            
+            if (q.explanation) {
+                feedback.innerHTML += `<div class="mt-2 text-sm" style="color: var(--text-secondary);"><i class="fas fa-info-circle"></i> ${q.explanation}</div>`;
+            }
             
             // Mark correct answer visually
             const correctLabel = document.getElementById(`label-${idx}-${correctAns}`);

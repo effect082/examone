@@ -104,14 +104,16 @@
 
         <!-- Testing Screen -->
         <div id="ox-test" class="hidden">
-            <div id="question-container">
-                <!-- Javascript will render questions here -->
+            <div id="question-container" class="glass-card" style="min-height: 250px; display: flex; flex-direction: column; justify-content: space-between;">
+                <!-- Javascript will render one question here -->
             </div>
             
-            <div class="glass-container mt-4" style="text-align: center;">
-                <button class="btn btn-primary btn-block" onclick="submitQuiz()">제출 및 채점하기</button>
+            <div id="ox-controls" class="hidden mt-4" style="text-align: center; display: flex; gap: 1rem; justify-content: center;">
+                <button id="add-note-btn" class="btn btn-outline" style="border-color: var(--danger); color: var(--danger);" onclick="addCurrentToNotes()"><i class="fas fa-plus"></i> 오답노트 등록하기</button>
+                <button id="next-q-btn" class="btn btn-primary" onclick="nextQuestion()">다음 문제 <i class="fas fa-arrow-right"></i></button>
             </div>
         </div>
+
 
         <!-- Result Screen -->
         <div id="ox-result" class="hidden glass-container mt-4" style="text-align: center;">

@@ -2,6 +2,8 @@ let oxData = [];
 let currentQuiz = [];
 let userAnswers = {};
 let isGraded = false;
+let currentQuestionIndex = 0;
+let correctCount = 0;
 
 const UIElem = {
     setup: document.getElementById('ox-setup'),
@@ -17,11 +19,6 @@ async function loadData() {
     try {
         const res = await fetch('data/ox_data.json');
         oxData = await res.json();
-        
-        // Populate subject dropdown (extract unique subjects)
-        // We no longer dynamically populate the dropdown from json. 
-        // We use the static <optgroup> in ox.html to ensure the 8 subjects are always present.
-
     } catch (e) {
         console.error('Failed to load OX data', e);
         showToast('데이터를 불러오는데 실패했습니다.');
@@ -39,6 +36,9 @@ function generateQuiz(type) {
         pool = [...oxData];
     }
     
+    // Filter out dummy empty entries
+    pool = pool.filter(q => q.question && q.question.trim() !== "");
+    
     // Select 20 random OX questions
     currentQuiz = shuffleArray(pool).slice(0, 20);
     
@@ -53,114 +53,126 @@ function generateQuiz(type) {
 function startTest() {
     userAnswers = {};
     isGraded = false;
+    currentQuestionIndex = 0;
+    correctCount = 0;
+
     UIElem.setup.classList.add('hidden');
     UIElem.test.classList.remove('hidden');
     UIElem.result.classList.add('hidden');
     
-    renderQuestions();
-    window.scrollTo(0,0);
+    renderCurrentQuestion();
+    window.scrollTo(0, 0);
 }
 
-function renderQuestions() {
-    UIElem.qContainer.innerHTML = '';
-    currentQuiz.forEach((q, idx) => {
-        const card = document.createElement('div');
-        card.className = 'glass-card mb-4';
-        card.id = `q-card-${idx}`;
-        
-        let html = `
-            <div style="font-size: 0.8rem; color: var(--primary-light); font-weight: 600; margin-bottom: 0.5rem;">[${q.category}]</div>
-            <h4 class="text-primary"><span class="qnum">${idx + 1}.</span> ${q.question}</h4>
-            <div class="ox-btn-group mt-4">
-                <button class="ox-btn" id="btn-O-${idx}" onclick="selectAnswer(${idx}, 'O')">O</button>
-                <button class="ox-btn" id="btn-X-${idx}" onclick="selectAnswer(${idx}, 'X')">X</button>
-            </div>
-            <div id="feedback-${idx}" class="feedback hidden mt-4 p-2" style="border-radius: 8px;"></div>
-        `;
-        
-        card.innerHTML = html;
-        UIElem.qContainer.appendChild(card);
-    });
-}
-
-function selectAnswer(qIdx, ans) {
-    if (isGraded) return;
-    userAnswers[qIdx] = ans;
+function renderCurrentQuestion() {
+    isGraded = false;
+    document.getElementById('ox-controls').classList.add('hidden');
     
-    // visual feedback for selection
-    document.getElementById(`btn-O-${qIdx}`).classList.remove('selected');
-    document.getElementById(`btn-X-${qIdx}`).classList.remove('selected');
-    document.getElementById(`btn-${ans}-${qIdx}`).classList.add('selected');
+    const q = currentQuiz[currentQuestionIndex];
+    
+    let html = `
+        <div style="font-size: 0.8rem; color: var(--primary-light); font-weight: 600; margin-bottom: 0.5rem; display: flex; justify-content: space-between;">
+            <span>[${q.category || 'OX 퀴즈'}]</span>
+            <span>${currentQuestionIndex + 1} / ${currentQuiz.length}</span>
+        </div>
+        <h4 class="text-primary mt-3" style="font-size: 1.2rem; line-height: 1.6; min-height: 80px;">${q.question}</h4>
+        <div class="ox-btn-group mt-4 mb-2">
+            <button class="ox-btn" id="btn-O" onclick="selectAnswer('O')">O</button>
+            <button class="ox-btn" id="btn-X" onclick="selectAnswer('X')">X</button>
+        </div>
+        <div id="feedback-area" class="feedback hidden mt-4 p-3" style="border-radius: 8px;"></div>
+    `;
+    
+    UIElem.qContainer.innerHTML = html;
 }
 
-function submitQuiz() {
-    if (Object.keys(userAnswers).length < currentQuiz.length) {
-        if (!confirm('풀지 않은 문제가 있습니다. 제출하시겠습니까?')) return;
+window.selectAnswer = function selectAnswer(ans) {
+    if (isGraded) return;
+    isGraded = true;
+    
+    const q = currentQuiz[currentQuestionIndex];
+    userAnswers[currentQuestionIndex] = ans;
+    const correctAns = q.answer.toUpperCase();
+    
+    const feedback = document.getElementById('feedback-area');
+    feedback.classList.remove('hidden');
+    
+    // Disable buttons
+    document.getElementById('btn-O').style.pointerEvents = 'none';
+    document.getElementById('btn-X').style.pointerEvents = 'none';
+    
+    if (ans === correctAns) {
+        correctCount++;
+        feedback.style.backgroundColor = 'var(--bg-gradient-1)';
+        feedback.style.color = 'var(--primary-dark)';
+        feedback.innerHTML = `<strong><i class="fas fa-check-circle" style="color: var(--success)"></i> 정답입니다!</strong>`;
+        
+        document.getElementById(`btn-${correctAns}`).style.backgroundColor = 'var(--bg-gradient-1)';
+        document.getElementById(`btn-${correctAns}`).style.color = 'var(--primary-dark)';
+        document.getElementById(`btn-${correctAns}`).style.borderColor = 'var(--primary-dark)';
+        
+        document.getElementById('add-note-btn').classList.add('hidden');
+    } else {
+        feedback.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+        feedback.style.color = 'var(--danger)';
+        feedback.innerHTML = `<strong><i class="fas fa-times-circle"></i> 오답입니다. (정답: ${correctAns})</strong>`;
+        
+        const correctBtn = document.getElementById(`btn-${correctAns}`);
+        if(correctBtn) {
+            correctBtn.style.backgroundColor = 'var(--bg-gradient-1)';
+            correctBtn.style.color = 'var(--primary-dark)';
+            correctBtn.style.borderColor = 'var(--primary-dark)';
+        }
+        
+        const wrongBtn = document.getElementById(`btn-${ans}`);
+        if(wrongBtn) {
+            wrongBtn.style.backgroundColor = 'var(--danger)';
+            wrongBtn.style.color = '#fff';
+            wrongBtn.style.borderColor = 'var(--danger)';
+        }
+        
+        document.getElementById('add-note-btn').classList.remove('hidden');
     }
     
-    isGraded = true;
-    let correctCount = 0;
+    if (q.explanation) {
+        feedback.innerHTML += `<div class="mt-2 text-sm" style="color: var(--text-dark);"><i class="fas fa-info-circle"></i> ${q.explanation}</div>`;
+    }
     
-    currentQuiz.forEach((q, idx) => {
-        const userAns = userAnswers[idx];
-        const correctAns = q.answer.toUpperCase(); // 'O' or 'X'
-        
-        const feedback = document.getElementById(`feedback-${idx}`);
-        feedback.classList.remove('hidden');
-        
-        // Disable buttons
-        document.getElementById(`btn-O-${idx}`).style.pointerEvents = 'none';
-        document.getElementById(`btn-X-${idx}`).style.pointerEvents = 'none';
-        
-        if (userAns === correctAns) {
-            correctCount++;
-            feedback.style.backgroundColor = 'var(--ok-bg)';
-            feedback.style.color = 'var(--ok)';
-            feedback.innerHTML = `<strong>정답입니다!</strong>`;
-            // highlight correct button
-            document.getElementById(`btn-${correctAns}-${idx}`).style.backgroundColor = 'var(--ok)';
-            document.getElementById(`btn-${correctAns}-${idx}`).style.color = '#fff';
-            document.getElementById(`btn-${correctAns}-${idx}`).style.borderColor = 'var(--ok)';
-        } else {
-            feedback.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
-            feedback.style.color = 'var(--danger)';
-            feedback.innerHTML = `<strong>오답입니다. (정답: ${correctAns})</strong>`;
-            if (q.explanation) {
-                feedback.innerHTML += `<div class="mt-2 text-sm" style="color: var(--text-secondary);"><i class="fas fa-info-circle"></i> ${q.explanation}</div>`;
-            }
-            
-            // Mark correct answer visually
-            const correctBtn = document.getElementById(`btn-${correctAns}-${idx}`);
-            if(correctBtn) {
-                correctBtn.style.backgroundColor = 'var(--bg-gradient-1)';
-                correctBtn.style.color = 'var(--primary-dark)';
-                correctBtn.style.borderColor = 'var(--primary-dark)';
-            }
-            
-            // Mark wrong answer
-            if (userAns) {
-                const wrongBtn = document.getElementById(`btn-${userAns}-${idx}`);
-                if(wrongBtn) {
-                    wrongBtn.style.backgroundColor = 'var(--danger)';
-                    wrongBtn.style.color = '#fff';
-                    wrongBtn.style.borderColor = 'var(--danger)';
-                }
-            }
+    const nextBtn = document.getElementById('next-q-btn');
+    if (currentQuestionIndex === currentQuiz.length - 1) {
+        nextBtn.innerHTML = '결과 보기 <i class="fas fa-chart-bar"></i>';
+    } else {
+        nextBtn.innerHTML = '다음 문제 <i class="fas fa-arrow-right"></i>';
+    }
+    
+    document.getElementById('ox-controls').classList.remove('hidden');
+}
 
-            // Save to notebook
-            DB.saveIncorrect('ox', q);
-        }
-    });
-    
+window.nextQuestion = function nextQuestion() {
+    if (currentQuestionIndex < currentQuiz.length - 1) {
+        currentQuestionIndex++;
+        renderCurrentQuestion();
+    } else {
+        showResult();
+    }
+}
+
+window.addCurrentToNotes = function addCurrentToNotes() {
+    const q = currentQuiz[currentQuestionIndex];
+    DB.saveIncorrect('ox', q);
+    showToast('오답노트에 추가되었습니다.');
+    document.getElementById('add-note-btn').classList.add('hidden');
+}
+
+function showResult() {
+    UIElem.test.classList.add('hidden');
     UIElem.result.classList.remove('hidden');
     UIElem.scoreText.innerText = `총 ${currentQuiz.length}문제 중 ${correctCount}문제 정답! (${Math.round((correctCount/currentQuiz.length)*100)}점)`;
-    window.scrollTo(0, document.body.scrollHeight);
+    window.scrollTo(0, 0);
     
     // Save Score to Backend
     const wrongIds = Object.keys(userAnswers).filter(idx => userAnswers[idx] !== currentQuiz[idx].answer.toUpperCase());
-    DB.saveScore('ox', UIElem.subjectSelect.value || 'Random', Math.round((correctCount/currentQuiz.length)*100), currentQuiz.length, wrongIds);
-    
-    showToast('채점이 완료되었습니다. 오답은 오답노트에 자동 저장됩니다.');
+    DB.saveScore('OX 퀴즈', UIElem.subjectSelect.value || '랜덤 연습', correctCount, currentQuiz.length, wrongIds);
 }
 
 function resetQuiz() {
