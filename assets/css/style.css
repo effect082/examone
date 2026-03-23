@@ -80,6 +80,8 @@ p {
 
 .text-center { text-align: center; }
 .text-primary { color: var(--primary-color); }
+.text-secondary { color: var(--text-secondary); }
+.text-light { color: #94a3b8; } /* A lighter grey that is still visible on white bg */
 .text-sm { font-size: 0.875rem; }
 .font-bold { font-weight: 700; }
 
@@ -122,7 +124,7 @@ p {
 .logout-btn {
     background: none;
     border: none;
-    color: var(--text-light);
+    color: var(--primary-color); /* Changed from var(--text-light) to be visible */
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 600;
@@ -239,7 +241,7 @@ p {
     flex: 1;
     padding: 0.75rem;
     font-weight: 600;
-    color: var(--text-light);
+    color: var(--text-secondary); /* Changed from var(--text-light) to be visible on white bg */
     cursor: pointer;
     border-bottom: 2px solid transparent;
     margin-bottom: -2px;
