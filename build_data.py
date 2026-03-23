@@ -53,8 +53,8 @@ def build_exam_data():
         questions = []
         qcs = sec.find_all('div', class_='qc')
         for qc in qcs:
-            qnum_span = qc.find('span', class_='qnum')
-            qnum_text = qnum_span.text.strip().replace('.', '') if qnum_span else ""
+            qnum_div = qc.find('div', class_='qnum')
+            qnum_text = qnum_div.text.strip().replace('.', '') if qnum_div else ""
             qnum = int(qnum_text) if qnum_text.isdigit() else 0
             
             qtxt_div = qc.find('div', class_='q-txt')
@@ -70,11 +70,14 @@ def build_exam_data():
             ans_badge = qc.find('div', class_='ans-badge')
             ans_text = ans_badge.text.strip() if ans_badge else ""
             
+            correct_ans = answers.get(qnum, '')
+            
             questions.append({
                 'qnum': qnum,
                 'question': qtxt,
                 'options': opts,
-                'correct_answer': answers.get(qnum, '')
+                'correct_answer': correct_ans,
+                'explanation': f"정답은 {correct_ans}번입니다. 문제의 핵심 내용을 파악하여 정답을 선택해 주세요."
             })
             
         exams.append({
@@ -91,5 +94,5 @@ def build_exam_data():
 
 if __name__ == '__main__':
     os.makedirs('data', exist_ok=True)
-    build_ox_data()
+    # build_ox_data()
     build_exam_data()

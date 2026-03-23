@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 도구 - 기출문제 분석</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .admin-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .upload-area {
+            border: 2px dashed #007bff;
+            padding: 40px;
+            text-align: center;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background 0.3s;
+        }
+        .upload-area:hover {
+            background: #f0f7ff;
+        }
+        #fileInput {
+            display: none;
+        }
+        .result-area {
+            display: none;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        pre {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #eee;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>기출문제 데이터 분석 도구</h1>
+        <p>사회복지사 1급 기출문제 HTML 파일을 업로드하여 데이터를 분석합니다.</p>
+        
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <p>이곳을 클릭하거나 파일을 드래그하여 업로드하세요 (HTML 파일)</p>
+            <input type="file" id="fileInput" accept=".html">
+        </div>
+
+        <div id="status" style="margin-top: 10px; color: #666;"></div>
+
+        <div class="result-area" id="resultArea">
+            <h3>분석 결과 요약</h3>
+            <div id="summary"></div>
+            <button class="btn-primary" onclick="downloadJSON()">분석된 JSON 다운로드</button>
+            <p style="font-size: 12px; color: #888; margin-top: 10px;">* 다운로드한 파일을 <code>data/exam_data.json</code>으로 교체해 주세요.</p>
+            
+            <h4 style="margin-top:20px;">데이터 미리보기</h4>
+            <pre id="jsonPreview"></pre>
+        </div>
+        
+        <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+            <a href="index.html" style="color: #666; text-decoration: none;">← 메인으로 돌아가기</a>
+        </div>
+    </div>
+
+    <script>
+        let parsedData = null;
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const html = e.target.result;
+                analyzeHTML(html);
+            };
+            reader.readAsText(file);
+        });
+
+        function analyzeHTML(html) {
+            const status = document.getElementById('status');
+            status.innerText = "분석 중...";
+            
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const exams = [];
+                const sections = doc.querySelectorAll('.sec');
+
+                sections.forEach(sec => {
+                    const secId = sec.id || "";
+                    const h2 = sec.querySelector('h2');
+                    const title = h2 ? h2.textContent.trim() : "";
+                    
+                    const subTagsDiv = sec.querySelector('.sub-tags');
+                    const subjects = subTagsDiv ? Array.from(subTagsDiv.querySelectorAll('.sub-tag')).map(t => t.textContent.trim()) : [];
+                    const subject = title.includes('—') ? title.split('—').pop().trim() : "";
+
+                    const answers = {};
+                    const ansSheet = sec.querySelector('.ans-sheet');
+                    if (ansSheet) {
+                        const tds = ansSheet.querySelectorAll('td');
+                        tds.forEach((td, i) => {
+                            answers[i + 1] = td.textContent.trim();
+                        });
+                    }
+
+                    const questions = [];
+                    const qcs = sec.querySelectorAll('.qc');
+                    qcs.forEach(qc => {
+                        const qnumDiv = qc.querySelector('.qnum');
+                        const qnumText = qnumDiv ? qnumDiv.textContent.trim().replace('.', '') : "";
+                        const qnum = parseInt(qnumText) || 0;
+
+                        const qtxtDiv = qc.querySelector('.q-txt');
+                        const qtxt = qtxtDiv ? qtxtDiv.textContent.trim().replace(/\s+/g, ' ') : "";
+
+                        const opts = [];
+                        const qOpts = qc.querySelectorAll('.q-opt');
+                        qOpts.forEach(opt => {
+                            opts.push(opt.textContent.trim().replace(/\s+/g, ' '));
+                        });
+
+                        const correctAns = answers[qnum] || "";
+
+                        questions.push({
+                            qnum: qnum,
+                            question: qtxt,
+                            options: opts,
+                            correct_answer: correctAns,
+                            explanation: `정답은 ${correctAns}번입니다. 문제의 핵심 내용을 파악하여 정답을 선택해 주세요.`
+                        });
+                    });
+
+                    exams.push({
+                        id: secId,
+                        title: title,
+                        subjects: subjects,
+                        section_subject: subject,
+                        questions: questions
+                    });
+                });
+
+                parsedData = exams;
+                showResults(exams);
+                status.innerText = "분석 완료!";
+            } catch (err) {
+                console.error(err);
+                status.innerText = "분석 오류: " + err.message;
+            }
+        }
+
+        function showResults(data) {
+            const resultArea = document.getElementById('resultArea');
+            const summary = document.getElementById('summary');
+            const preview = document.getElementById('jsonPreview');
+
+            resultArea.style.display = "block";
+            
+            let totalQuestions = 0;
+            data.forEach(ex => totalQuestions += ex.questions.length);
+
+            summary.innerHTML = `
+                <ul>
+                    <li>추출된 섹션 수: $ {data.length}개</li>
+                    <li>총 문항 수: $ {totalQuestions}개</li>
+                </ul>
+            `;
+
+            preview.textContent = JSON.stringify(data.slice(0, 1), null, 2) + "\n\n... (생략)";
+        }
+
+        function downloadJSON() {
+            if (!parsedData) return;
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(parsedData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href",     dataStr);
+            downloadAnchorNode.setAttribute("download", "exam_data.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+    </script>
+</body>
+</html>
