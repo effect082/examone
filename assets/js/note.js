@@ -219,19 +219,12 @@ function getTerms() {
 }
 
 function saveTerm(term, definition) {
-    const user = DB.getUser();
-    if(!user) return;
-    const terms = getTerms();
-    terms.push({ id: Date.now(), term, definition, date: new Date().toISOString() });
-    localStorage.setItem(`terms_${user.name}`, JSON.stringify(terms));
+    const termObj = { id: Date.now(), type: 'term', term, definition, date: new Date().toISOString() };
+    DB.saveTerm(termObj);
 }
 
 function removeTerm(id) {
-    const user = DB.getUser();
-    if(!user) return;
-    let terms = getTerms();
-    terms = terms.filter(t => t.id !== id);
-    localStorage.setItem(`terms_${user.name}`, JSON.stringify(terms));
+    DB.removeTerm(id);
 }
 
 window.addTermModal = function() {

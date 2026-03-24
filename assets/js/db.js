@@ -67,24 +67,18 @@ const DB = {
             const res = await fetch(`${GAS_URL}?action=getWrong&userId=${this.user.userId}`);
             const data = await res.json();
             if(data && data.success) {
-                // Convert to frontend note format
-                const notes = data.data.map(item => ({
-                    id: item.questionId,
-                    type: item.subject === 'OX Quiz' ? 'ox' : 'exam',
-                    date: item.savedAt,
-                    question: item.questionText,
-                    // Minimal reconstruct, since we just need display
-                    options: [], answer: '', correct_answer: 0, category: item.subject
-                }));
-                // In a real app we'd merge cleanly. For now, just overriding is fine for simplified sync.
-                // Or better, let's keep local format if they store full JSON in memo.
-                // Wait, if memo stores full JSON, we can parse it!
-                const parsedNotes = data.data.map(item => {
+                const allFetched = data.data.map(item => {
                     try { return JSON.parse(item.memo); } catch(e) { return null; }
                 }).filter(n => n!==null);
 
-                if (parsedNotes.length > 0) {
-                     localStorage.setItem(`notes_${this.user.name}`, JSON.stringify(parsedNotes));
+                const examOxNotes = allFetched.filter(n => n.type !== 'term');
+                const terms = allFetched.filter(n => n.type === 'term');
+
+                if (examOxNotes.length > 0 || data.data.length === 0) {
+                     localStorage.setItem(`notes_${this.user.name}`, JSON.stringify(examOxNotes));
+                }
+                if (terms.length > 0 || data.data.length === 0) {
+                     localStorage.setItem(`terms_${this.user.name}`, JSON.stringify(terms));
                 }
             }
         } catch(e) {
@@ -151,6 +145,48 @@ const DB = {
         let notes = this.getNotes();
         notes = notes.filter(n => String(n.id) !== String(id));
         localStorage.setItem(`notes_${this.user.name}`, JSON.stringify(notes));
+
+        try {
+            fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'deleteWrong',
+                    userId: this.user.userId,
+                    questionId: id
+                }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            });
+        } catch(e) { console.error(e); }
+    },
+
+    saveTerm: async function(termObj) {
+        if (!this.user) return;
+        
+        let terms = JSON.parse(localStorage.getItem(`terms_${this.user.name}`) || '[]');
+        terms.push(termObj);
+        localStorage.setItem(`terms_${this.user.name}`, JSON.stringify(terms));
+
+        try {
+            fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'saveWrong',
+                    userId: this.user.userId,
+                    questionId: termObj.id,
+                    questionText: (termObj.term || '').substring(0, 50),
+                    subject: '단어/용어 정리',
+                    memo: JSON.stringify(termObj)
+                }),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            });
+        } catch(e) { console.error("GAS sync failed", e); }
+    },
+
+    removeTerm: function(id) {
+        if (!this.user) return;
+        let terms = JSON.parse(localStorage.getItem(`terms_${this.user.name}`) || '[]');
+        terms = terms.filter(t => String(t.id) !== String(id));
+        localStorage.setItem(`terms_${this.user.name}`, JSON.stringify(terms));
 
         try {
             fetch(GAS_URL, {
