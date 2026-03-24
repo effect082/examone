@@ -186,7 +186,7 @@ function submitExam() {
             }
 
             // Save to notebook if incorrect
-            DB.saveIncorrect('exam', q);
+            DB.saveIncorrect('exam', { ...q, user_answer: userAns });
         }
     });
     

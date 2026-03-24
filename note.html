@@ -8,6 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- Loader -->
+    <div id="loader" class="loader-wrapper hidden">
+        <div class="loader"></div>
+        <div style="font-weight: 600; color: var(--primary-dark);">로딩 중...</div>
+    </div>
 
     <div class="app-wrapper">
         <header class="header">
@@ -29,6 +34,18 @@
 
             <!-- Exam Notes -->
             <div id="content-exam">
+                <div class="bulk-action-bar hidden" id="bulk-bar-exam">
+                    <div class="bulk-action-info">
+                        <input type="checkbox" id="select-all-exam" class="custom-checkbox">
+                        <span>전체 선택</span>
+                        <span id="selected-count-exam" class="text-primary" style="margin-left: 10px;"></span>
+                    </div>
+                    <div class="bulk-action-btns">
+                        <button class="btn btn-outline" style="color:var(--danger); border-color:var(--danger); padding: 5px 12px; font-size: 0.85rem;" onclick="window.deleteSelected()">
+                            <i class="fas fa-trash"></i> 선택 삭제
+                        </button>
+                    </div>
+                </div>
                 <p class="text-secondary mb-4"><i class="fas fa-info-circle"></i> 모의고사에서 틀렸던 문제들을 복습하세요. 정답이 초록색으로 표시됩니다.</p>
                 <div id="exam-list">
                     <!-- JS rendered -->
@@ -37,6 +54,18 @@
 
             <!-- OX Notes -->
             <div id="content-ox" class="hidden">
+                <div class="bulk-action-bar hidden" id="bulk-bar-ox">
+                    <div class="bulk-action-info">
+                        <input type="checkbox" id="select-all-ox" class="custom-checkbox">
+                        <span>전체 선택</span>
+                        <span id="selected-count-ox" class="text-primary" style="margin-left: 10px;"></span>
+                    </div>
+                    <div class="bulk-action-btns">
+                        <button class="btn btn-outline" style="color:var(--danger); border-color:var(--danger); padding: 5px 12px; font-size: 0.85rem;" onclick="window.deleteSelected()">
+                            <i class="fas fa-trash"></i> 선택 삭제
+                        </button>
+                    </div>
+                </div>
                 <p class="text-secondary mb-4"><i class="fas fa-info-circle"></i> OX 퀴즈에서 틀렸던 지문과 해설입니다.</p>
                 <div id="ox-list">
                     <!-- JS rendered -->
@@ -55,7 +84,7 @@
     </div>
 
     <!-- DB and Note logic -->
-    <script src="assets/js/db.js"></script>
-    <script src="assets/js/note.js"></script>
+    <script charset="UTF-8" src="assets/js/db.js"></script>
+    <script charset="UTF-8" src="assets/js/note.js"></script>
 </body>
 </html>

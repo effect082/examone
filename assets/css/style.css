@@ -491,3 +491,56 @@ p {
         font-size: 3rem;
     }
 }
+
+/* Bulk Action Bar */
+.bulk-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.bulk-action-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.bulk-action-btns {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Custom Checkbox */
+.custom-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.note-checkbox-container {
+    padding-right: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.glass-card.selectable {
+    display: flex;
+    align-items: flex-start;
+}
+
+.note-content {
+    flex: 1;
+}

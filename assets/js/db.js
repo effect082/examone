@@ -149,7 +149,7 @@ const DB = {
     removeNote: function(id) {
         if (!this.user) return;
         let notes = this.getNotes();
-        notes = notes.filter(n => n.id !== id);
+        notes = notes.filter(n => String(n.id) !== String(id));
         localStorage.setItem(`notes_${this.user.name}`, JSON.stringify(notes));
 
         try {
@@ -163,6 +163,34 @@ const DB = {
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }
             });
         } catch(e) { console.error(e); }
+    },
+
+    removeNotes: async function(ids) {
+        if (!this.user || !ids || ids.length === 0) return;
+        
+        // Local update
+        let notes = this.getNotes();
+        const idSet = new Set(ids.map(id => String(id)));
+        notes = notes.filter(n => !idSet.has(String(n.id)));
+        localStorage.setItem(`notes_${this.user.name}`, JSON.stringify(notes));
+
+        // Backend update (Parallel requests for now, as backend doesn't have bulk endpoint)
+        // We limit parallel requests to avoid hitting rate limits or crashing the browser
+        const CHUNK_SIZE = 5;
+        for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+            const chunk = ids.slice(i, i + CHUNK_SIZE);
+            await Promise.all(chunk.map(id => {
+                return fetch(GAS_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'deleteWrong',
+                        userId: this.user.userId,
+                        questionId: id
+                    }),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+                }).catch(e => console.error(`Failed to delete note ${id}`, e));
+            }));
+        }
     }
 };
 

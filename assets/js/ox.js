@@ -175,7 +175,11 @@ window.nextQuestion = function nextQuestion() {
 
 window.addCurrentToNotes = function addCurrentToNotes() {
     const q = currentQuiz[currentQuestionIndex];
-    DB.saveIncorrect('ox', q);
+    DB.saveIncorrect('ox', {
+        ...q,
+        user_answer: userAnswers[currentQuestionIndex],
+        correct_answer: q.answer
+    });
     showToast('오답노트에 추가되었습니다.');
     document.getElementById('add-note-btn').classList.add('hidden');
 }
